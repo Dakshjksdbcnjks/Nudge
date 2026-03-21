@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nudge — Know Before You Buy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #FFFCF7;
+      --cream-2: #FFF7EE;
+      --white: #FFFFFF;
+      --espresso: #1C1410;
+      --brown: #6B5C52;
+      --brown-light: #A39088;
+      --border: #EDE6DC;
+      --border-strong: #D4C8BC;
+      --green: #2D6A4F;
+      --green-mid: #52B788;
+      --green-light: #EBF5F0;
+      --amber: #C96A0A;
+      --amber-light: #FEF3E2;
+      --accent: #D4663A;
+      --accent-light: #FDF0EB;
+      --red: #C0392B;
+      --red-light: #FEF0EE;
+      --shadow-sm: 0 1px 3px rgba(28,20,16,0.07), 0 1px 2px rgba(28,20,16,0.04);
+      --shadow-md: 0 4px 16px rgba(28,20,16,0.08), 0 2px 6px rgba(28,20,16,0.05);
+      --shadow-lg: 0 12px 40px rgba(28,20,16,0.12), 0 4px 12px rgba(28,20,16,0.06);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--espresso);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: fadeUp 0.4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(255,252,247,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--espresso);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-btn {
+      background: none; border: 1.5px solid var(--border-strong);
+      color: var(--brown); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      padding: 6px 16px; border-radius: 100px; cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .nav-btn:hover { background: var(--espresso); color: white; border-color: var(--espresso); }
+
+    /* PAGE WRAPPER */
+    .page { max-width: 680px; margin: 0 auto; padding: 80px 24px 60px; }
+    .page-wide { max-width: 900px; margin: 0 auto; padding: 80px 24px 60px; }
+
+    /* TYPOGRAPHY */
+    .display {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -0.02em; color: var(--espresso);
+    }
+    .display em { font-style: italic; color: var(--accent); }
+    .heading {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 500; line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+    .subheading {
+      font-family: 'Fraunces', serif;
+      font-size: 20px; font-weight: 500;
+    }
+    .body-lg { font-size: 18px; line-height: 1.65; color: var(--brown); }
+    .body { font-size: 15px; line-height: 1.65; color: var(--brown); }
+    .caption { font-size: 13px; color: var(--brown-light); }
+    .label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--brown-light);
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-lg {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px; font-weight: 600;
+      padding: 14px 28px; border-radius: 100px;
+      border: none; cursor: pointer;
+      transition: all 0.18s ease; text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--espresso); color: white;
+    }
+    .btn-primary:hover { background: #2D2118; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-accent {
+      background: var(--accent); color: white;
+    }
+    .btn-accent:hover { background: #BF5A32; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border-strong); color: var(--brown);
+    }
+    .btn-outline:hover { border-color: var(--espresso); color: var(--espresso); }
+    .btn-green { background: var(--green); color: white; }
+    .btn-green:hover { background: #245840; transform: translateY(-1px); }
+    .btn-sm {
+      font-size: 14px; font-weight: 500;
+      padding: 8px 18px; border-radius: 100px;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* FORM ELEMENTS */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 14px; font-weight: 500; color: var(--espresso); }
+    .form-hint { font-size: 12px; color: var(--brown-light); }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: var(--espresso);
+      background: var(--cream);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+      background: white;
+    }
+    input[type="number"] { -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* TAGS */
+    .tag {
+      display: inline-block; font-size: 12px; font-weight: 600;
+      padding: 4px 12px; border-radius: 100px;
+      letter-spacing: 0.02em;
+    }
+    .tag-green { background: var(--green-light); color: var(--green); }
+    .tag-amber { background: var(--amber-light); color: var(--amber); }
+    .tag-red { background: var(--red-light); color: var(--red); }
+    .tag-accent { background: var(--accent-light); color: var(--accent); }
+
+    /* DIVIDER */
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* ========================
+       SCREEN: LANDING
+    ======================== */
+    #screen-landing .hero { padding-top: 32px; }
+    #screen-landing .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-light); color: var(--accent);
+      border: 1px solid rgba(212,102,58,0.2);
+      font-size: 13px; font-weight: 600;
+      padding: 6px 14px; border-radius: 100px;
+      margin-bottom: 24px;
+    }
+    #screen-landing .pill-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+    .hero-sub {
+      font-size: 18px; color: var(--brown);
+      max-width: 440px; margin: 16px 0 40px;
+      line-height: 1.65;
+    }
+    .path-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-top: 8px;
+    }
+    @media (max-width: 520px) { .path-cards { grid-template-columns: 1fr; } }
+    .path-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      text-align: left;
+      box-shadow: var(--shadow-sm);
+      position: relative; overflow: hidden;
+    }
+    .path-card::before {
+      content: ''; position: absolute;
+      inset: 0; opacity: 0; transition: opacity 0.22s ease;
+    }
+    .path-card.calc::before { background: radial-gradient(circle at top right, var(--accent-light), transparent 70%); }
+    .path-card.debt::before { background: radial-gradient(circle at top right, var(--green-light), transparent 70%); }
+    .path-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .path-card:hover::before { opacity: 1; }
+    .path-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 16px;
+    }
+    .path-icon.orange { background: var(--accent-light); }
+    .path-icon.green { background: var(--green-light); }
+    .path-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 20px; font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .path-card p { font-size: 14px; color: var(--brown); line-height: 1.5; }
+    .path-arrow {
+      position: absolute; top: 24px; right: 24px;
+      color: var(--brown-light); font-size: 20px;
+      transition: transform 0.2s ease;
+    }
+    .path-card:hover .path-arrow { transform: translate(2px, -2px); }
+
+    .social-proof {
+      margin-top: 48px; display: flex; align-items: center; gap: 20px;
+      padding-top: 32px; border-top: 1px solid var(--border);
+    }
+    .social-proof .stat { text-align: center; }
+    .social-proof .stat-number {
+      font-family: 'Fraunces', serif;
+      font-size: 24px; font-weight: 700; color: var(--espresso);
+    }
+    .social-proof .stat-label { font-size: 12px; color: var(--brown-light); margin-top: 2px; }
+    .social-proof .sep { width: 1px; height: 40px; background: var(--border); }
+
+    /* ========================
+       SCREEN: QUIZ
+    ======================== */
+    .quiz-progress { margin-bottom: 32px; }
+    .quiz-progress-bar {
+      height: 4px; background: var(--border);
+      border-radius: 4px; margin-bottom: 12px; overflow: hidden;
+    }
+    .quiz-progress-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 4px; transition: width 0.4s ease;
+    }
+    .quiz-step-label { font-size: 13px; color: var(--brown-light); }
+    .quiz-question {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(22px, 4vw, 30px);
+      font-weight: 500; line-height: 1.25;
+      margin-bottom: 32px; letter-spacing: -0.01em;
+    }
+    .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+    .quiz-option {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      cursor: pointer; text-align: left;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px; color: var(--espresso);
+      transition: all 0.18s ease;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .quiz-option:hover { border-color: var(--accent); background: var(--accent-light); }
+    .quiz-option.selected { border-color: var(--accent); background: var(--accent-light); }
+    .quiz-option-letter {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--cream-2); border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: var(--brown);
+      flex-shrink: 0; transition: all 0.18s ease;
+    }
+    .quiz-option.selected .quiz-option-letter,
+    .quiz-option:hover .quiz-option-letter {
+      background: var(--accent); border-color: var(--accent); color: white;
+    }
+
+    /* ========================
+       SCREEN: CALCULATOR
+    ======================== */
+    .calc-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 520px) { .calc-form-grid { grid-template-columns: 1fr; } }
+    .calc-form-full { grid-column: 1 / -1; }
+
+    .payment-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .payment-opt {
+      flex: 1; min-width: 80px;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--cream); color: var(--brown);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; text-align: center;
+      transition: all 0.15s ease;
+    }
+    .payment-opt.active {
+      border-color: var(--accent);
+      background: var(--accent-light); color: var(--accent);
+    }
+
+    .advanced-toggle {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: var(--brown-light);
+      cursor: pointer; margin-top: 4px;
+      width: fit-content;
+    }
+    .advanced-toggle svg { transition: transform 0.2s ease; }
+    .advanced-toggle.open svg { transform: rotate(180deg); }
+    .advanced-fields { display: none; padding-top: 16px; }
+    .advanced-fields.visible { display: contents; }
+
+    /* RESULTS */
+    .results-header { margin-bottom: 24px; }
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 16px;
+    }
+    @media (max-width: 520px) { .results-grid { grid-template-columns: 1fr; } }
+    .result-card {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+    .result-card .result-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--brown-light); margin-bottom: 8px; }
+    .result-card .result-value {
+      font-family: 'Fraunces', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--espresso); line-height: 1;
+    }
+    .result-card .result-sub { font-size: 13px; color: var(--brown); margin-top: 6px; }
+    .result-card.highlight {
+      background: var(--accent-light);
+      border-color: rgba(212,102,58,0.25);
+    }
+    .result-card.highlight .result-label { color: var(--accent); }
+    .result-card.highlight .result-value { color: var(--accent); }
+    .result-card.positive { background: var(--green-light); border-color: rgba(45,106,79,0.2); }
+    .result-card.positive .result-label { color: var(--green); }
+    .result-card.positive .result-value { color: var(--green); }
+
+    /* THE NUDGE CARD */
+    .nudge-card {
+      background: var(--espresso);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin: 20px 0;
+      position: relative; overflow: hidden;
+    }
+    .nudge-card::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+    .nudge-card::after {
+      content: '';
+      position: absolute; bottom: -60px; left: -20px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: rgba(255,255,255,0.02);
+    }
+    .nudge-eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.45);
+      margin-bottom: 12px;
+    }
+    .nudge-text {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(18px, 3vw, 22px);
+      font-weight: 500; line-height: 1.45;
+      color: white;
+      position: relative; z-index: 1;
+    }
+    .nudge-verdict {
+      margin-top: 20px; padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .nudge-verdict-text { font-size: 14px; color: rgba(255,255,255,0.6); }
+    .verdict-btns { display: flex; gap: 8px; }
+    .verdict-btn {
+      padding: 8px 18px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+      transition: all 0.15s ease;
+    }
+    .verdict-yes { background: rgba(255,255,255,0.12); color: white; }
+    .verdict-yes:hover { background: rgba(255,255,255,0.2); }
+    .verdict-no { background: var(--accent); color: white; }
+    .verdict-no:hover { background: #BF5A32; }
+
+    /* ========================
+       SCREEN: DEBTMAP
+    ======================== */
+    .profile-banner {
+      border-radius: var(--radius-lg); padding: 28px;
+      margin-bottom: 28px; position: relative; overflow: hidden;
+    }
+    .profile-banner.avoider {
+      background: linear-gradient(135deg, #FFF7EE 0%, #FDEEE4 100%);
+      border: 1px solid rgba(212,102,58,0.2);
+    }
+    .profile-banner.impulsive {
+      background: linear-gradient(135deg, #EBF5F0 0%, #D8EFE5 100%);
+      border: 1px solid rgba(45,106,79,0.2);
+    }
+    .profile-banner.optimizer {
+      background: linear-gradient(135deg, #F0EFFD 0%, #E4E2FA 100%);
+      border: 1px solid rgba(80,70,180,0.2);
+    }
+    .profile-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px; font-weight: 600; margin-bottom: 8px;
+    }
+    .profile-desc { font-size: 15px; color: var(--brown); max-width: 480px; }
+
+    .debt-entries { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .debt-entry {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 20px;
+    }
+    .debt-entry-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .debt-entry-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 540px) { .debt-entry-grid { grid-template-columns: 1fr 1fr; } }
+    .debt-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--brown-light); font-size: 18px;
+      padding: 4px; border-radius: 6px; transition: color 0.15s;
+    }
+    .debt-remove:hover { color: var(--red); }
+
+    .strategy-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .strat-tab {
+      flex: 1; padding: 10px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--cream); color: var(--brown);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; text-align: center; transition: all 0.15s ease;
+    }
+    .strat-tab.active {
+      border-color: var(--green); background: var(--green-light); color: var(--green);
+    }
+
+    .debt-progress-list { display: flex; flex-direction: column; gap: 16px; }
+    .debt-progress-item { }
+    .debt-progress-header {
+      display: flex; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .debt-progress-name { font-size: 15px; font-weight: 500; }
+    .debt-progress-amount { font-size: 15px; color: var(--brown); }
+    .debt-bar-track {
+      height: 10px; background: var(--border);
+      border-radius: 100px; overflow: hidden;
+    }
+    .debt-bar-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--green-mid), var(--green));
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .debt-progress-meta {
+      display: flex; justify-content: space-between;
+      margin-top: 6px;
+    }
+    .debt-progress-meta span { font-size: 12px; color: var(--brown-light); }
+
+    .comparison-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;
+    }
+    @media (max-width: 520px) { .comparison-cards { grid-template-columns: 1fr; } }
+    .comp-card {
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 18px;
+    }
+    .comp-card.winner { border-color: var(--green); background: var(--green-light); }
+    .comp-card .comp-title { font-size: 13px; font-weight: 600; color: var(--brown-light); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .comp-card.winner .comp-title { color: var(--green); }
+    .comp-card .comp-value { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; }
+    .comp-card .comp-sub { font-size: 13px; color: var(--brown); margin-top: 4px; }
+
+    .motivation-card {
+      background: var(--espresso); border-radius: var(--radius-lg);
+      padding: 24px 28px; margin-top: 24px; color: white;
+    }
+    .motivation-card .mot-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.4);
+      margin-bottom: 12px;
+    }
+    .motivation-card .mot-text {
+      font-family: 'Fraunces', serif;
+      font-size: 18px; line-height: 1.5; font-weight: 400;
+      font-style: italic;
+    }
+
+    /* CHART CONTAINER */
+    .chart-container { position: relative; width: 100%; height: 240px; margin: 16px 0; }
+
+    /* MISC */
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-gap { display: flex; align-items: center; gap: 12px; }
+    .mt-8  { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mt-32 { margin-top: 32px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-24 { margin-bottom: 24px; }
+    .text-center { text-align: center; }
+    .hidden { display: none !important; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--espresso); color: white;
+      padding: 12px 24px; border-radius: 100px;
+      font-size: 14px; font-weight: 500;
+      transition: transform 0.3s ease; z-index: 1000;
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ADD DEBT BTN */
+    .add-debt-btn {
+      width: 100%; padding: 14px;
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+      background: none; cursor: pointer; color: var(--brown-light);
+      font-family: 'DM Sans', sans-serif; font-size: 15px;
+      transition: all 0.15s ease;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .add-debt-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="logo" onclick="goHome()">nudge<span>.</span></span>
+  <div class="nav-links">
+    <button class="nav-btn" onclick="goToScreen('calculator')">Check a purchase</button>
+    <button class="nav-btn" onclick="goToScreen('quiz')">Debt coach</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ======================== LANDING ======================== -->
+<div id="screen-landing" class="screen active">
+  <div class="page">
+    <div class="hero">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-light);color:var(--accent);border:1px solid rgba(212,102,58,0.2);font-size:13px;font-weight:600;padding:6px 14px;border-radius:100px;margin-bottom:24px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;display:block;"></span>
+        Your financial reality check
+      </div>
+
+      <h1 class="display">
+        Before you buy,<br><em>know the real cost.</em>
+      </h1>
+
+      <p class="hero-sub">
+        Most finance apps assume you're ready to change. Nudge meets you where you are — no judgment, just the numbers that matter.
+      </p>
+
+      <div class="path-cards">
+        <div class="path-card calc" onclick="goToScreen('calculator')">
+          <div class="path-icon orange">💳</div>
+          <h3>Check a purchase</h3>
+          <p>See what any buy actually costs — in interest, hours worked, and future wealth lost.</p>
+          <span class="path-arrow">↗</span>
+        </div>
+        <div class="path-card debt" onclick="goToScreen('quiz')">
+          <div class="path-icon green">🗺️</div>
+          <h3>I'm dealing with debt</h3>
+          <p>Get a personalized debt payoff plan built around your financial personality.</p>
+          <span class="path-arrow">↗</span>
+        </div>
+      </div>
+
+      <div class="social-proof">
+        <div class="stat">
+          <div class="stat-number">$1,847</div>
+          <div class="stat-label">avg impulse cost per year</div>
+        </div>
+        <div class="sep"></div>
+        <div class="stat">
+          <div class="stat-number">33%</div>
+          <div class="stat-label">of Gen Z avoids finances when stressed</div>
+        </div>
+        <div class="sep"></div>
+        <div class="stat">
+          <div class="stat-number">$94K</div>
+          <div class="stat-label">avg Gen Z debt load</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== QUIZ ======================== -->
+<div id="screen-quiz" class="screen">
+  <div class="page">
+    <div class="quiz-progress">
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="quiz-progress-fill" style="width:20%"></div>
+      </div>
+      <span class="quiz-step-label" id="quiz-step-label">Question 1 of 5</span>
+    </div>
+
+    <p class="quiz-question" id="quiz-question-text"></p>
+
+    <div class="quiz-options" id="quiz-options-container"></div>
+
+    <div style="display:flex;gap:12px;margin-top:28px;">
+      <button class="btn btn-outline" id="quiz-back-btn" onclick="quizBack()" style="display:none;">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== CALCULATOR ======================== -->
+<div id="screen-calculator" class="screen">
+  <div class="page">
+    <div id="calc-form-view">
+      <div class="mb-24">
+        <div class="tag tag-accent mb-16">True Cost Calculator</div>
+        <h2 class="heading" style="margin-bottom:8px;">What are you about to buy?</h2>
+        <p class="body">We'll show you what it really costs — after interest, in hours worked, and in future wealth.</p>
+      </div>
+
+      <div class="card-lg">
+        <div class="calc-form-grid">
+          <div class="form-group calc-form-full">
+            <label class="form-label">What is it?</label>
+            <input type="text" id="item-name" placeholder="e.g. AirPods, dinner with friends, new jacket...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Price ($)</label>
+            <input type="number" id="item-price" placeholder="0.00" step="0.01" min="0">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your hourly wage ($)</label>
+            <input type="number" id="hourly-wage" placeholder="e.g. 18" step="0.01" min="0">
+          </div>
+
+          <div class="form-group calc-form-full">
+            <label class="form-label">How are you paying?</label>
+            <div class="payment-options">
+              <div class="payment-opt active" data-method="cash" onclick="selectPayment(this)">💵 Cash / Debit</div>
+              <div class="payment-opt" data-method="credit" onclick="selectPayment(this)">💳 Credit Card</div>
+              <div class="payment-opt" data-method="bnpl" onclick="selectPayment(this)">📅 Buy Now Pay Later</div>
+            </div>
+          </div>
+
+          <div class="form-group calc-form-full">
+            <label class="form-label">Category</label>
+            <select id="item-category">
+              <option value="general">General purchase</option>
+              <option value="food">Food & dining</option>
+              <option value="clothing">Clothing & fashion</option>
+              <option value="tech">Tech & electronics</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="social">Social / going out</option>
+              <option value="beauty">Beauty & personal care</option>
+            </select>
+          </div>
+
+          <!-- ADVANCED -->
+          <div class="calc-form-full">
+            <div class="advanced-toggle" id="adv-toggle" onclick="toggleAdvanced()">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+              Advanced settings
+            </div>
+            <div class="advanced-fields calc-form-grid" id="adv-fields">
+              <div class="form-group" id="apr-group">
+                <label class="form-label">APR / Interest rate (%)</label>
+                <input type="number" id="apr-rate" placeholder="24.99" step="0.1" value="24.99">
+                <span class="form-hint">Avg credit card APR in 2025</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Investment return (%)</label>
+                <input type="number" id="invest-rate" placeholder="7" step="0.1" value="7">
+                <span class="form-hint">Historical S&P 500 avg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <button class="btn btn-accent" style="width:100%;" onclick="calculateCost()">
+          Show me the real cost →
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULTS VIEW (hidden until calculated) -->
+    <div id="calc-results-view" class="hidden">
+      <div class="flex-between mb-24">
+        <div>
+          <div class="tag tag-accent mb-16" id="res-category-tag">True Cost</div>
+          <h2 class="heading" id="res-item-heading">Your purchase</h2>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="resetCalculator()">← Recalculate</button>
+      </div>
+
+      <div class="results-grid">
+        <div class="result-card highlight">
+          <div class="result-label">Real cost</div>
+          <div class="result-value" id="res-real-cost">—</div>
+          <div class="result-sub" id="res-real-sub">After interest & fees</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Hours of work</div>
+          <div class="result-value" id="res-hours">—</div>
+          <div class="result-sub" id="res-hours-sub">Based on your wage</div>
+        </div>
+        <div class="result-card positive">
+          <div class="result-label">In 20 years if invested</div>
+          <div class="result-value" id="res-future">—</div>
+          <div class="result-sub">At 7% annual return</div>
+        </div>
+        <div class="result-card" id="res-extra-card">
+          <div class="result-label" id="res-extra-label">Interest paid</div>
+          <div class="result-value" id="res-extra-value">—</div>
+          <div class="result-sub" id="res-extra-sub">Extra cost of financing</div>
+        </div>
+      </div>
+
+      <!-- THE NUDGE -->
+      <div class="nudge-card">
+        <div class="nudge-eyebrow" id="nudge-profile-label">Your nudge</div>
+        <div class="nudge-text" id="nudge-text">—</div>
+        <div class="nudge-verdict">
+          <span class="nudge-verdict-text">Still going to buy it?</span>
+          <div class="verdict-btns">
+            <button class="verdict-btn verdict-yes" onclick="handleVerdict('yes')">Yes, I'm sure</button>
+            <button class="verdict-btn verdict-no" onclick="handleVerdict('no')">Actually, no</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="resetCalculator()">Check another purchase</button>
+        <button class="btn btn-outline" onclick="goToScreen('quiz')" id="calc-to-debt-btn">Get your debt plan →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== DEBTMAP ======================== -->
+<div id="screen-debtmap" class="screen">
+  <div class="page">
+    <div id="debtmap-profile-view">
+      <div class="mb-24">
+        <div class="tag tag-green mb-16">Debt Coach</div>
+        <h2 class="heading">Your financial profile</h2>
+      </div>
+      <div class="profile-banner" id="profile-banner">
+        <div class="profile-title" id="profile-title">—</div>
+        <div class="profile-desc" id="profile-desc">—</div>
+        <div style="margin-top:16px;">
+          <span class="tag" id="profile-tag">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="debtmap-entry">
+      <h3 class="subheading mb-16">Add your debts</h3>
+      <div class="debt-entries" id="debt-entries-container">
+        <!-- injected by JS -->
+      </div>
+      <button class="add-debt-btn" onclick="addDebtEntry()" id="add-debt-btn">
+        <span>+</span> Add another debt
+      </button>
+
+      <div class="divider"></div>
+      <button class="btn btn-green" style="width:100%;" onclick="calculateDebtMap()">
+        Build my payoff map →
+      </button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="debtmap-results" class="hidden">
+      <div class="flex-between mb-24">
+        <h3 class="subheading">Your payoff plan</h3>
+        <button class="btn btn-outline btn-sm" onclick="resetDebtMap()">← Edit debts</button>
+      </div>
+
+      <div class="strategy-tabs">
+        <button class="strat-tab active" id="tab-snowball" onclick="switchStrategy('snowball')">
+          ❄️ Snowball method
+        </button>
+        <button class="strat-tab" id="tab-avalanche" onclick="switchStrategy('avalanche')">
+          🏔️ Avalanche method
+        </button>
+      </div>
+
+      <div class="debt-progress-list" id="debt-progress-list"></div>
+
+      <div class="comparison-cards">
+        <div class="comp-card" id="comp-snowball">
+          <div class="comp-title">❄️ Snowball</div>
+          <div class="comp-value" id="snow-months">—</div>
+          <div class="comp-sub" id="snow-interest">Total interest: —</div>
+        </div>
+        <div class="comp-card" id="comp-avalanche">
+          <div class="comp-title">🏔️ Avalanche</div>
+          <div class="comp-value" id="aval-months">—</div>
+          <div class="comp-sub" id="aval-interest">Total interest: —</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="debt-chart"></canvas>
+      </div>
+
+      <div class="motivation-card">
+        <div class="mot-label">Your coach says</div>
+        <div class="mot-text" id="motivation-text">—</div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="goToScreen('calculator')">Check a purchase while you're at it →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  screen: 'landing',
+  profile: null,   // 'avoider' | 'impulsive' | 'optimizer'
+  quizStep: 0,
+  scores: { avoider: 0, impulsive: 0, optimizer: 0 },
+  paymentMethod: 'cash',
+  debtChart: null,
+  currentStrategy: 'snowball',
+  debtResults: null,
+  debtEntryCount: 0
+};
+
+// ============================================================
+// QUIZ DATA
+// ============================================================
+const quizQuestions = [
+  {
+    q: "When you think about checking your bank account, you usually feel...",
+    opts: [
+      { text: "A little anxious — I try to avoid it honestly", type: 'avoider' },
+      { text: "Unbothered, I deal with money when I have to", type: 'impulsive' },
+      { text: "Ready — I actually enjoy tracking the numbers", type: 'optimizer' }
+    ]
+  },
+  {
+    q: "Surprise! You just got $400 you weren't expecting. First instinct?",
+    opts: [
+      { text: "Put it somewhere safe and don't think about it", type: 'avoider' },
+      { text: "Honestly? I already have 3 things in mind to buy", type: 'impulsive' },
+      { text: "Calculate the optimal place to allocate it", type: 'optimizer' }
+    ]
+  },
+  {
+    q: "Your relationship with your debt is best described as...",
+    opts: [
+      { text: "It stresses me out, so I try not to think about it", type: 'avoider' },
+      { text: "Part of life — I'll deal with it eventually", type: 'impulsive' },
+      { text: "A math problem I'm actively working to solve", type: 'optimizer' }
+    ]
+  },
+  {
+    q: "You buy something and immediately feel buyer's remorse. You...",
+    opts: [
+      { text: "Feel guilty and try to push it out of my mind", type: 'avoider' },
+      { text: "Rationalize it — it'll be fine, it always is", type: 'impulsive' },
+      { text: "Calculate exactly how much that decision cost you", type: 'optimizer' }
+    ]
+  },
+  {
+    q: "The finance app you'd actually stick with would...",
+    opts: [
+      { text: "Be gentle with me — no scary numbers, just soft guidance", type: 'avoider' },
+      { text: "Make saving feel as fun and rewarding as spending", type: 'impulsive' },
+      { text: "Give me all the data and full control over everything", type: 'optimizer' }
+    ]
+  }
+];
+
+const profiles = {
+  avoider: {
+    title: "The Mindful Protector",
+    desc: "You protect yourself from financial stress by keeping some distance from the numbers. That's okay — Nudge will always be gentle with you. No scary graphs, no judgment. Just one clear, actionable thing at a time.",
+    tag: "Gentle coaching mode",
+    tagClass: "tag-accent",
+    bannerClass: "avoider",
+    strategy: "snowball"
+  },
+  impulsive: {
+    title: "The In-the-Moment Spender",
+    desc: "You feel money in real time — spending feels natural, future planning feels abstract. Nudge speaks your language. It won't lecture you, just make the future feel as vivid as the present moment.",
+    tag: "Motivation-first mode",
+    tagClass: "tag-green",
+    bannerClass: "impulsive",
+    strategy: "snowball"
+  },
+  optimizer: {
+    title: "The Strategic Thinker",
+    desc: "You want the data, all of it, right now. You know that every dollar has an opportunity cost and you don't like wasting either. Nudge gives you every number and every projection — no hand-holding needed.",
+    tag: "Full data mode",
+    tagClass: "tag-accent",
+    bannerClass: "optimizer",
+    strategy: "avalanche"
+  }
+};
+
+// ============================================================
+// NUDGE ENGINE
+// ============================================================
+function generateNudge(profile, item, price, realCost, hours, futureValue, category, paymentMethod) {
+  const p = price;
+  const fv = Math.round(futureValue);
+  const rc = realCost.toFixed(2);
+  const h = hours < 1 ? Math.round(hours * 60) + ' min' : parseFloat(hours.toFixed(1)) + (hours === 1 ? ' hour' : ' hours');
+  const extra = (realCost - price).toFixed(2);
+  const itemName = item || 'this purchase';
+  const bnplNote = paymentMethod === 'bnpl' ? ' BNPL makes it feel free — it\'s anything but.' : '';
+  const bracket = p < 50 ? 'small' : p < 250 ? 'medium' : 'large';
+
+  const templates = {
+    avoider: {
+      small: [
+        `Just a gentle heads-up: ${itemName} = ${h} of your time. If it still feels good, go for it. You deserve nice things — just with your eyes open.`,
+        `No pressure here. This is ${h} of work. If it brings you genuine joy, that math can work out just fine.${bnplNote}`
+      ],
+      medium: [
+        `Hey — before you do this, just know: ${itemName} is ${h} of work and $${fv} you won't have in 20 years. Is this the version of yourself you're spending for?${bnplNote}`,
+        `You've got this. But just so you know: ${itemName} costs ${h} of your real, actual time. That's the honest price tag. Still feel right?`
+      ],
+      large: [
+        `This is a bigger one — ${h} of work, and $${fv} in future value. Not saying don't do it. Just making sure it's a choice you're making, not a habit you're repeating.${bnplNote}`,
+        `${itemName} at $${p}. That's ${h} of your life. You work hard for that. Make sure this earns it.`
+      ]
+    },
+    impulsive: {
+      small: [
+        `Quick check: ${itemName} = ${h} of work. Does the vibe last longer than that?${bnplNote}`,
+        `Future you just peeked over your shoulder. They said: "${h} of work for this?" Still feeling it?`
+      ],
+      medium: [
+        `Okay real talk: ${itemName} is ${h} of work + $${fv} you won't have in 20 years. Worth the moment?${bnplNote}`,
+        `The impulse is real. So is this: ${h} of work, $${rc} actual cost, $${fv} in lost growth. Feeling it still?`,
+        `You'll forget this ${itemName} in 3 months. You'll feel the $${fv} in retirement. Just saying.${bnplNote}`
+      ],
+      large: [
+        `Imagine working ${h} for just this one thing. Because you literally are. $${fv} in 20 years walks out the door too.${bnplNote}`,
+        `Big purchase energy. Respect. But: ${h} of your life + $${fv} future value. Is this the one that's worth it?`
+      ]
+    },
+    optimizer: {
+      small: [
+        `Data: ${itemName} = ${h} labor + $${fv} opportunity cost at 7% over 20yr. Effective cost: $${(p/parseFloat(hours.toFixed(1))).toFixed(2)}/hr utility. Optimized?${bnplNote}`,
+        `Quick math: $${p} → $${fv} at 7% in 20yr. ${h} of labor. Does the utility justify both?`
+      ],
+      medium: [
+        `Full cost breakdown — sticker: $${p}, real cost: $${rc}, 20yr opportunity cost: $${fv}, labor: ${h}. Total economic impact: $${Math.round(parseFloat(rc) + fv).toLocaleString()}. Your move.${bnplNote}`,
+        `Interest cost: $${extra}. Hours: ${h}. Future value foregone: $${fv}. If this decision were a stock, what's the ROI?`
+      ],
+      large: [
+        `Hard numbers: $${rc} after interest, ${h} of labor, $${fv} opportunity cost. That's a total economic cost of $${(parseFloat(rc) + fv).toLocaleString()}. You already knew this — now you have the data.${bnplNote}`,
+        `Running the numbers: ${h} worked, $${extra} in financing cost, $${fv} in 20yr growth foregone. Net utility of this purchase needs to beat $${(parseFloat(rc) + fv).toLocaleString()} to be optimal.`
+      ]
+    }
+  };
+
+  const profileNudges = templates[profile || 'impulsive'][bracket];
+  return profileNudges[Math.floor(Math.random() * profileNudges.length)];
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goToScreen(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  state.screen = screen;
+  window.scrollTo(0, 0);
+
+  if (screen === 'quiz') renderQuizStep();
+  if (screen === 'debtmap') renderDebtmapProfile();
+}
+
+function goHome() {
+  goToScreen('landing');
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function renderQuizStep() {
+  const step = state.quizStep;
+  const q = quizQuestions[step];
+  const fill = ((step + 1) / quizQuestions.length) * 100;
+
+  document.getElementById('quiz-progress-fill').style.width = fill + '%';
+  document.getElementById('quiz-step-label').textContent = `Question ${step + 1} of ${quizQuestions.length}`;
+  document.getElementById('quiz-question-text').textContent = q.q;
+  document.getElementById('quiz-back-btn').style.display = step > 0 ? 'inline-flex' : 'none';
+
+  const container = document.getElementById('quiz-options-container');
+  container.innerHTML = '';
+  const letters = ['A', 'B', 'C'];
+
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.innerHTML = `
+      <span class="quiz-option-letter">${letters[i]}</span>
+      <span>${opt.text}</span>
+    `;
+    btn.onclick = () => quizAnswer(opt.type);
+    container.appendChild(btn);
+  });
+}
+
+function quizAnswer(type) {
+  state.scores[type] += 1;
+  state.quizStep++;
+
+  if (state.quizStep >= quizQuestions.length) {
+    const winner = Object.entries(state.scores).sort((a,b) => b[1]-a[1])[0][0];
+    state.profile = winner;
+    goToScreen('debtmap');
+  } else {
+    renderQuizStep();
+  }
+}
+
+function quizBack() {
+  if (state.quizStep > 0) {
+    state.quizStep--;
+    renderQuizStep();
+  }
+}
+
+// ============================================================
+// DEBTMAP PROFILE
+// ============================================================
+function renderDebtmapProfile() {
+  if (!state.profile) {
+    document.getElementById('debtmap-profile-view').classList.add('hidden');
+    if (state.debtEntryCount === 0) addDebtEntry();
+    return;
+  }
+
+  const prof = profiles[state.profile];
+  document.getElementById('debtmap-profile-view').classList.remove('hidden');
+  document.getElementById('profile-title').textContent = prof.title;
+  document.getElementById('profile-desc').textContent = prof.desc;
+  const tagEl = document.getElementById('profile-tag');
+  tagEl.textContent = prof.tag;
+  tagEl.className = 'tag ' + prof.tagClass;
+  document.getElementById('profile-banner').className = 'profile-banner ' + prof.bannerClass;
+
+  if (state.debtEntryCount === 0) addDebtEntry();
+  document.getElementById('debtmap-results').classList.add('hidden');
+  document.getElementById('debtmap-entry').classList.remove('hidden');
+}
+
+// ============================================================
+// DEBT ENTRIES
+// ============================================================
+function addDebtEntry() {
+  if (state.debtEntryCount >= 4) { showToast("Max 4 debts for now"); return; }
+  state.debtEntryCount++;
+  const id = state.debtEntryCount;
+  const container = document.getElementById('debt-entries-container');
+
+  const names = ['Credit Card', 'Student Loan', 'Car Loan', 'Personal Loan'];
+  const defaultName = names[id - 1] || `Debt ${id}`;
+
+  const el = document.createElement('div');
+  el.className = 'debt-entry';
+  el.id = `debt-entry-${id}`;
+  el.innerHTML = `
+    <div class="debt-entry-header">
+      <span class="subheading" style="font-size:16px;">Debt ${id}</span>
+      <button class="debt-remove" onclick="removeDebtEntry(${id})" title="Remove">✕</button>
+    </div>
+    <div class="debt-entry-grid">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input type="text" id="debt-name-${id}" placeholder="${defaultName}" value="${defaultName}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Balance ($)</label>
+        <input type="number" id="debt-balance-${id}" placeholder="e.g. 5000" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">APR (%)</label>
+        <input type="number" id="debt-apr-${id}" placeholder="e.g. 22" min="0" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Min. payment ($)</label>
+        <input type="number" id="debt-min-${id}" placeholder="e.g. 150" min="0">
+      </div>
+    </div>
+  `;
+  container.appendChild(el);
+
+  if (state.debtEntryCount >= 4) {
+    document.getElementById('add-debt-btn').style.display = 'none';
+  }
+}
+
+function removeDebtEntry(id) {
+  const el = document.getElementById(`debt-entry-${id}`);
+  if (el) el.remove();
+  document.getElementById('add-debt-btn').style.display = 'flex';
+  state.debtEntryCount = Math.max(0, state.debtEntryCount - 1);
+  if (state.debtEntryCount === 0) addDebtEntry();
+}
+
+// ============================================================
+// DEBT CALCULATION
+// ============================================================
+function getDebts() {
+  const debts = [];
+  for (let i = 1; i <= 4; i++) {
+    const balEl = document.getElementById(`debt-balance-${i}`);
+    if (!balEl) continue;
+    const balance = parseFloat(balEl.value);
+    const apr = parseFloat(document.getElementById(`debt-apr-${i}`)?.value) || 0;
+    const minPay = parseFloat(document.getElementById(`debt-min-${i}`)?.value) || 0;
+    const name = document.getElementById(`debt-name-${i}`)?.value || `Debt ${i}`;
+    if (balance > 0) debts.push({ name, balance, apr, minPay });
+  }
+  return debts;
+}
+
+function calcPayoff(debts, strategy) {
+  let debtsCopy = debts.map(d => ({ ...d, paid: 0 }));
+  const totalMinPayment = debtsCopy.reduce((s, d) => s + d.minPay, 0);
+  const extraPayment = Math.max(totalMinPayment * 0.3, 50);
+  const totalMonthly = totalMinPayment + extraPayment;
+
+  if (strategy === 'snowball') {
+    debtsCopy.sort((a, b) => a.balance - b.balance);
+  } else {
+    debtsCopy.sort((a, b) => b.apr - a.apr);
+  }
+
+  let months = 0;
+  let totalInterest = 0;
+  const maxMonths = 360;
+
+  while (debtsCopy.some(d => d.balance > 0) && months < maxMonths) {
+    months++;
+    let available = totalMonthly;
+
+    debtsCopy.forEach(d => {
+      if (d.balance <= 0) return;
+      const monthlyInterest = (d.apr / 100 / 12) * d.balance;
+      totalInterest += monthlyInterest;
+      d.balance += monthlyInterest;
+    });
+
+    for (let i = 0; i < debtsCopy.length; i++) {
+      if (debtsCopy[i].balance <= 0) continue;
+      const payment = Math.min(available, debtsCopy[i].balance);
+      debtsCopy[i].balance -= payment;
+      available -= payment;
+      if (debtsCopy[i].balance <= 0.01) debtsCopy[i].balance = 0;
+      if (available <= 0) break;
+    }
+  }
+
+  return { months, totalInterest: Math.round(totalInterest) };
+}
+
+function calculateDebtMap() {
+  const debts = getDebts();
+  if (debts.length === 0) {
+    showToast('Please add at least one debt');
+    return;
+  }
+  if (debts.some(d => d.minPay <= 0)) {
+    showToast('Please add a minimum payment for each debt');
+    return;
+  }
+
+  const snowball = calcPayoff(debts, 'snowball');
+  const avalanche = calcPayoff(debts, 'avalanche');
+
+  state.debtResults = { debts, snowball, avalanche };
+  state.currentStrategy = state.profile ? profiles[state.profile].strategy : 'snowball';
+
+  document.getElementById('debtmap-entry').classList.add('hidden');
+  document.getElementById('debtmap-results').classList.remove('hidden');
+
+  renderDebtResults();
+}
+
+function renderDebtResults() {
+  const { debts, snowball, avalanche } = state.debtResults;
+  const strategy = state.currentStrategy;
+
+  // Tabs
+  document.getElementById('tab-snowball').className = 'strat-tab' + (strategy === 'snowball' ? ' active' : '');
+  document.getElementById('tab-avalanche').className = 'strat-tab' + (strategy === 'avalanche' ? ' active' : '');
+
+  // Comparison cards
+  const snowWins = snowball.totalInterest <= avalanche.totalInterest;
+  document.getElementById('comp-snowball').className = 'comp-card' + (snowWins ? ' winner' : '');
+  document.getElementById('comp-avalanche').className = 'comp-card' + (!snowWins ? ' winner' : '');
+  document.getElementById('snow-months').textContent = snowball.months + ' months';
+  document.getElementById('snow-interest').textContent = 'Total interest: $' + snowball.totalInterest.toLocaleString();
+  document.getElementById('aval-months').textContent = avalanche.months + ' months';
+  document.getElementById('aval-interest').textContent = 'Total interest: $' + avalanche.totalInterest.toLocaleString();
+
+  // Progress bars
+  const sortedDebts = strategy === 'snowball'
+    ? [...debts].sort((a,b) => a.balance - b.balance)
+    : [...debts].sort((a,b) => b.apr - a.apr);
+
+  const maxBalance = Math.max(...debts.map(d => d.balance));
+  const progressList = document.getElementById('debt-progress-list');
+  progressList.innerHTML = '';
+
+  sortedDebts.forEach((d, i) => {
+    const percent = Math.round((d.balance / maxBalance) * 100);
+    const priority = i === 0 ? '🎯 Target first' : '';
+    const div = document.createElement('div');
+    div.className = 'debt-progress-item';
+    div.innerHTML = `
+      <div class="debt-progress-header">
+        <span class="debt-progress-name">${d.name} ${priority ? `<span class="tag tag-green" style="font-size:11px;padding:2px 8px;">${priority}</span>` : ''}</span>
+        <span class="debt-progress-amount">$${d.balance.toLocaleString()}</span>
+      </div>
+      <div class="debt-bar-track">
+        <div class="debt-bar-fill" style="width:0%" data-target="${percent}"></div>
+      </div>
+      <div class="debt-progress-meta">
+        <span>${d.apr}% APR</span>
+        <span>Min: $${d.minPay}/mo</span>
+      </div>
+    `;
+    progressList.appendChild(div);
+  });
+
+  setTimeout(() => {
+    document.querySelectorAll('.debt-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.target + '%';
+    });
+  }, 100);
+
+  // Chart
+  renderDebtChart(sortedDebts);
+
+  // Motivation
+  renderMotivation(debts, snowball, avalanche);
+}
+
+function renderDebtChart(debts) {
+  if (state.debtChart) state.debtChart.destroy();
+  const ctx = document.getElementById('debt-chart').getContext('2d');
+  const colors = ['#2D6A4F', '#52B788', '#D4663A', '#E8863A'];
+
+  state.debtChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: debts.map(d => d.name),
+      datasets: [{
+        label: 'Balance',
+        data: debts.map(d => d.balance),
+        backgroundColor: debts.map((_, i) => colors[i % colors.length]),
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => '$' + ctx.raw.toLocaleString() }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v),
+            font: { size: 12 }
+          },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: { ticks: { font: { size: 12 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderMotivation(debts, snowball, avalanche) {
+  const prof = state.profile || 'impulsive';
+  const totalDebt = debts.reduce((s, d) => s + d.balance, 0);
+  const bestMonths = Math.min(snowball.months, avalanche.months);
+  const savings = Math.abs(snowball.totalInterest - avalanche.totalInterest);
+  const years = (bestMonths / 12).toFixed(1);
+
+  const messages = {
+    avoider: `You don't have to tackle this all at once. One payment. One month. That's all you're committing to right now. Your plan is waiting — it'll be here when you're ready, no judgment.`,
+    impulsive: `$${totalDebt.toLocaleString()} sounds huge. But look — in ${years} years, at your current trajectory, you could be completely debt-free. That version of you has ${Math.round(totalDebt * 0.3).toLocaleString()} more reasons to say yes to things they actually want.`,
+    optimizer: `Total debt: $${totalDebt.toLocaleString()}. Optimal strategy saves you $${savings.toLocaleString()} in interest. Payoff in ${bestMonths} months (${years} years). Every extra dollar on your target debt is compounding in your favor. The math is working for you.`
+  };
+
+  document.getElementById('motivation-text').textContent = messages[prof];
+}
+
+function switchStrategy(strategy) {
+  state.currentStrategy = strategy;
+  renderDebtResults();
+}
+
+function resetDebtMap() {
+  document.getElementById('debtmap-results').classList.add('hidden');
+  document.getElementById('debtmap-entry').classList.remove('hidden');
+}
+
+// ============================================================
+// CALCULATOR
+// ============================================================
+let selectedPaymentMethod = 'cash';
+
+function selectPayment(el) {
+  document.querySelectorAll('.payment-opt').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  selectedPaymentMethod = el.dataset.method;
+  // Show/hide APR group
+  const aprGroup = document.getElementById('apr-group');
+  aprGroup.style.opacity = selectedPaymentMethod === 'cash' ? '0.4' : '1';
+}
+
+function toggleAdvanced() {
+  const toggle = document.getElementById('adv-toggle');
+  const fields = document.getElementById('adv-fields');
+  toggle.classList.toggle('open');
+  fields.classList.toggle('visible');
+}
+
+function calculateCost() {
+  const item   = document.getElementById('item-name').value.trim();
+  const price  = parseFloat(document.getElementById('item-price').value);
+  const wage   = parseFloat(document.getElementById('hourly-wage').value);
+  const category = document.getElementById('item-category').value;
+  const apr    = parseFloat(document.getElementById('apr-rate').value) || 24.99;
+  const iRate  = parseFloat(document.getElementById('invest-rate').value) || 7;
+
+  if (!price || price <= 0) { showToast('Please enter a purchase price'); return; }
+  if (!wage || wage <= 0)   { showToast('Please enter your hourly wage'); return; }
+
+  // Calculate real cost based on payment method
+  let realCost = price;
+  let interestPaid = 0;
+  let realCostNote = 'Paid in full, no interest';
+
+  if (selectedPaymentMethod === 'credit') {
+    // Assume minimum payments: roughly 24 months to pay off a moderate purchase
+    const months = Math.max(6, Math.round(price / (price * 0.025 + 10)));
+    const monthlyRate = apr / 100 / 12;
+    const minPay = price * 0.025 + 10;
+    let balance = price;
+    let totalPaid = 0;
+    for (let m = 0; m < 240 && balance > 0.01; m++) {
+      balance += balance * monthlyRate;
+      const payment = Math.min(balance, Math.max(minPay, balance * 0.025));
+      balance -= payment;
+      totalPaid += payment;
+    }
+    realCost = totalPaid;
+    interestPaid = totalPaid - price;
+    realCostNote = `After ${Math.round(apr)}% APR, paying minimums`;
+  } else if (selectedPaymentMethod === 'bnpl') {
+    // BNPL: typically 6 payments, ~15-30% effective APR hidden
+    const bnplRate = 0.24;
+    realCost = price * (1 + bnplRate * 0.5);
+    interestPaid = realCost - price;
+    realCostNote = 'After BNPL fees (~24% effective APR)';
+  }
+
+  const hours = realCost / wage;
+  const futureValue = price * Math.pow(1 + iRate / 100, 20);
+
+  // Render results
+  document.getElementById('calc-form-view').classList.add('hidden');
+  document.getElementById('calc-results-view').classList.remove('hidden');
+
+  document.getElementById('res-item-heading').textContent = item || 'Your purchase';
+
+  const cats = { food:'🍽️ Dining', clothing:'👗 Fashion', tech:'💻 Tech', entertainment:'🎬 Entertainment', social:'👥 Social', beauty:'✨ Beauty', general:'🛒 General' };
+  document.getElementById('res-category-tag').textContent = cats[category] || 'True Cost';
+
+  document.getElementById('res-real-cost').textContent = '$' + realCost.toFixed(2);
+  document.getElementById('res-real-sub').textContent = realCostNote;
+
+  const hDisplay = hours < 1
+    ? Math.round(hours * 60) + ' min'
+    : parseFloat(hours.toFixed(1)) + (hours === 1 ? ' hour' : ' hours');
+  document.getElementById('res-hours').textContent = hDisplay;
+  document.getElementById('res-hours-sub').textContent = `At $${wage}/hr`;
+
+  document.getElementById('res-future').textContent = '$' + Math.round(futureValue).toLocaleString();
+
+  if (selectedPaymentMethod === 'cash') {
+    document.getElementById('res-extra-label').textContent = 'Opportunity cost';
+    document.getElementById('res-extra-value').textContent = '$' + Math.round(futureValue - price).toLocaleString();
+    document.getElementById('res-extra-sub').textContent = 'What you lose vs. investing';
+  } else {
+    document.getElementById('res-extra-label').textContent = 'Interest / fees paid';
+    document.getElementById('res-extra-value').textContent = '$' + interestPaid.toFixed(2);
+    document.getElementById('res-extra-sub').textContent = 'Extra cost of financing';
+    document.getElementById('res-extra-card').className = 'result-card highlight';
+  }
+
+  // NUDGE
+  const nudge = generateNudge(
+    state.profile, item, price, realCost,
+    hours, futureValue - price, category, selectedPaymentMethod
+  );
+  document.getElementById('nudge-text').textContent = nudge;
+
+  const profileLabels = {
+    avoider: '✦ Personalized for you — gentle mode',
+    impulsive: '✦ Personalized for you — real talk mode',
+    optimizer: '✦ Personalized for you — data mode',
+  };
+  document.getElementById('nudge-profile-label').textContent =
+    state.profile ? profileLabels[state.profile] : '✦ Your nudge';
+
+  document.getElementById('calc-to-debt-btn').style.display = state.profile ? 'none' : 'inline-flex';
+}
+
+function handleVerdict(v) {
+  if (v === 'no') {
+    showToast('Smart move. Your future self thanks you. 🙌');
+    setTimeout(() => resetCalculator(), 1500);
+  } else {
+    showToast('All good. At least now you know the real cost.');
+    setTimeout(() => resetCalculator(), 1500);
+  }
+}
+
+function resetCalculator() {
+  document.getElementById('calc-form-view').classList.remove('hidden');
+  document.getElementById('calc-results-view').classList.add('hidden');
+  document.getElementById('item-name').value = '';
+  document.getElementById('item-price').value = '';
+  document.getElementById('item-category').value = 'general';
+  document.querySelectorAll('.payment-opt').forEach(e => e.classList.remove('active'));
+  document.querySelector('.payment-opt[data-method="cash"]').classList.add('active');
+  selectedPaymentMethod = 'cash';
+  document.getElementById('res-extra-card').className = 'result-card';
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
