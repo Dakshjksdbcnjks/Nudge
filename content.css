@@ -1,0 +1,87 @@
+#nudge-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483647;
+  transform: translateY(-100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: -apple-system, 'DM Sans', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#nudge-banner-inner {
+  background: #1C1410;
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+}
+
+#nudge-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#nudge-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+#nudge-logo span {
+  color: #D4663A;
+}
+
+#nudge-tagline {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+}
+
+#nudge-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#nudge-open-btn {
+  background: #D4663A;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+#nudge-open-btn:hover {
+  background: #BF5A32;
+}
+
+#nudge-dismiss-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+#nudge-dismiss-btn:hover {
+  color: rgba(255,255,255,0.8);
+}
+
+@media (max-width: 600px) {
+  #nudge-tagline { display: none; }
+  #nudge-banner-inner { padding: 10px 16px; }
+}

@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Nudge — Know Before You Buy",
+  "version": "1.0",
+  "description": "Nudge appears on checkout pages to show you the real cost of what you're buying — in interest, hours worked, and future wealth.",
+  "permissions": ["activeTab", "tabs"],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open Nudge"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.checkout.stripe.com/*",
+        "*://*.paypal.com/checkoutnow*",
+        "*://*.afterpay.com/checkout*",
+        "*://*.klarna.com/checkout*",
+        "*://*.affirm.com/checkout*",
+        "*://*.shop.app/checkouts/*",
+        "*://checkout.shopify.com/*",
+        "*://*.myshopify.com/*/checkout*",
+        "*://*.etsy.com/*/checkout*",
+        "*://*.bestbuy.com/checkout/*",
+        "*://*.target.com/co-checkout/*",
+        "*://*.walmart.com/checkout/*",
+        "*://*.apple.com/shop/checkout*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
