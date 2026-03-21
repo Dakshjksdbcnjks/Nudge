@@ -1534,6 +1534,54 @@ function resetCalculator() {
 }
 
 // ============================================================
+// EXTENSION AUTOFILL — reads ?price, ?name, ?method from URL
+// ============================================================
+function readExtensionParams() {
+  const params = new URLSearchParams(window.location.search);
+  const price  = params.get('price');
+  const name   = params.get('name');
+  const method = params.get('method');
+
+  if (!price) return;
+
+  // Navigate to calculator screen
+  goToScreen('calculator');
+
+  // Small delay so the screen transition finishes first
+  setTimeout(() => {
+    if (price) {
+      document.getElementById('item-price').value = parseFloat(price).toFixed(2);
+    }
+    if (name) {
+      document.getElementById('item-name').value = decodeURIComponent(name);
+    }
+    if (method && ['cash','credit','bnpl'].includes(method)) {
+      document.querySelectorAll('.payment-opt').forEach(e => e.classList.remove('active'));
+      const el = document.querySelector(`.payment-opt[data-method="${method}"]`);
+      if (el) { el.classList.add('active'); selectedPaymentMethod = method; }
+    }
+
+    // Highlight the price field so user knows it was autofilled
+    const priceEl = document.getElementById('item-price');
+    priceEl.style.borderColor = '#D4663A';
+    priceEl.style.background  = '#FDF0EB';
+
+    // Flash a toast so user knows what happened
+    showToast('Price detected from checkout — just add your hourly wage to continue');
+
+    // Focus the hourly wage field — that's the only thing left to fill in
+    setTimeout(() => {
+      const wageEl = document.getElementById('hourly-wage');
+      wageEl.focus();
+      wageEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+  }, 300);
+}
+
+// Run on page load
+window.addEventListener('DOMContentLoaded', readExtensionParams);
+
+// ============================================================
 // UTILS
 // ============================================================
 function showToast(msg) {
