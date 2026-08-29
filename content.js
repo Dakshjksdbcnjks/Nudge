@@ -46,15 +46,8 @@ async function nextDelay() {
 function formatMoney(value) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(value); }
 async function recordSavings(amount) {
   if (!amount || amount <= 0) return;
-  const { nudge_session } = await chrome.storage.local.get('nudge_session');
-  if (!nudge_session?.access_token || !nudge_session?.user?.id) return;
-  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${nudge_session.access_token}`, 'Content-Type': 'application/json' };
   try {
-    const event = await fetch(`${SUPABASE_URL}/rest/v1/savings_events`, { method: 'POST', headers, body: JSON.stringify({ user_id: nudge_session.user.id, amount, url: location.href }) });
-    if (!event.ok) return;
-    await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_total_saved`, { method: 'POST', headers, body: JSON.stringify({ uid: nudge_session.user.id, amt: amount }) });
-    const current = await chrome.storage.local.get('nudge_total_saved');
-    await chrome.storage.local.set({ nudge_total_saved: Number(current.nudge_total_saved || 0) + amount });
+    await chrome.runtime.sendMessage({ type: 'NUDGE_RECORD_SAVINGS', amount, url: location.href });
   } catch (_) { /* A network error must never break the decision flow. */ }
 }
 function removeOverlay() { document.getElementById('nudge-circuit-breaker')?.remove(); overlayOpen = false; }

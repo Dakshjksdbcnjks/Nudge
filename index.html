@@ -1030,21 +1030,30 @@ function showAuthInfo(msg) {
 
 async function handleEmailAuthSubmit() {
   hideAuthMessages();
+  const submitBtn = document.getElementById('auth-submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Working…';
   const name = document.getElementById('auth-name').value.trim();
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
 
   if (!email || !password) {
     showAuthError('Enter both an email and a password.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
     return;
   }
   if (authMode === 'signup') {
     if (!name) {
       showAuthError('Enter your name.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
       return;
     }
     if (password.length < 6) {
       showAuthError('Password needs to be at least 6 characters.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
       return;
     }
   }
@@ -1066,6 +1075,8 @@ async function handleEmailAuthSubmit() {
       showAuthInfo('Check your email to confirm your account, then sign in.');
     }
   }
+  submitBtn.disabled = false;
+  submitBtn.textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
 }
 
 async function handleForgotPassword() {
@@ -1113,10 +1124,17 @@ async function handleSetNewPassword() {
 }
 
 async function handleGoogleSignIn() {
-  await sb.auth.signInWithOAuth({
+  hideAuthMessages();
+  const button = document.querySelector('[onclick="handleGoogleSignIn()"]');
+  if (button) { button.disabled = true; button.textContent = 'Opening Google…'; }
+  const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
   });
+  if (error) {
+    showAuthError(error.message);
+    if (button) { button.disabled = false; button.textContent = 'Continue with Google'; }
+  }
 }
 
 async function handleSignOut() {
@@ -1185,6 +1203,7 @@ sb.auth.onAuthStateChange((event, session) => {
 sb.auth.getSession().then(({ data: { session } }) => {
   currentSession = session;
   updateAuthUI(session);
+  broadcastSessionToExtension(session);
   if (session) fetchTotalSaved(session.user.id);
 });
 

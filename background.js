@@ -13,6 +13,10 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'NUDGE_SET_SESSION') {
     handleSetSession(msg.session);
+    return;
+  }
+  if (msg.type === 'NUDGE_RECORD_SAVINGS') {
+    recordSavingsEvent(Number(msg.amount), msg.url || sender.tab?.url || '');
   }
 });
 
