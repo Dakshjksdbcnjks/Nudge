@@ -669,48 +669,45 @@
 
 <!-- ======================== AUTH ======================== -->
 <div id="screen-auth" class="screen">
-  <div class="page" style="max-width:400px;">
-    <h1 class="display" style="font-size:32px;margin-bottom:8px;" id="auth-title">Sign in</h1>
-    <p style="color:var(--brown);font-size:14px;margin-bottom:24px;" id="auth-subtitle">Welcome back.</p>
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-md);">
-      <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
-      <label style="font-size:13px;font-weight:600;color:var(--brown);display:block;margin-bottom:6px;">Username</label>
-      <input id="auth-username" type="text" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;">
-      <label style="font-size:13px;font-weight:600;color:var(--brown);display:block;margin-bottom:6px;">Password</label>
-      <input id="auth-password" type="password" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;">
-      <button class="nav-btn" style="width:100%;background:var(--accent);color:white;border:none;" id="auth-submit-btn" onclick="handleAuthSubmit()">Sign in</button>
-      <p style="text-align:center;font-size:13px;color:var(--brown-light);margin-top:16px;">
-        <span id="auth-toggle-text">Don't have an account?</span>
-        <a href="#" onclick="toggleAuthMode();return false;" style="color:var(--accent);font-weight:600;text-decoration:none;" id="auth-toggle-link">Sign up</a>
-      </p>
-    </div>
-  </div>
-</div>
-
-<!-- ======================== AUTH ======================== -->
-<div id="screen-auth" class="screen">
   <div class="page" style="max-width:420px;">
     <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;box-shadow:var(--shadow-md);">
-      <div style="display:flex;gap:4px;background:var(--cream-2);border-radius:100px;padding:4px;margin-bottom:24px;">
-        <button id="auth-tab-signin" class="nav-btn" style="flex:1;border:none;" onclick="switchAuthTab('signin')">Sign in</button>
-        <button id="auth-tab-signup" class="nav-btn" style="flex:1;border:none;background:none;" onclick="switchAuthTab('signup')">Sign up</button>
+
+      <div id="auth-form-fields">
+        <div style="display:flex;gap:4px;background:var(--cream-2);border-radius:100px;padding:4px;margin-bottom:24px;">
+          <button id="auth-tab-signin" class="nav-btn" style="flex:1;border:none;" onclick="switchAuthTab('signin')">Sign in</button>
+          <button id="auth-tab-signup" class="nav-btn" style="flex:1;border:none;background:none;" onclick="switchAuthTab('signup')">Sign up</button>
+        </div>
+
+        <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+        <div id="auth-info" style="display:none;background:var(--green-light);color:var(--green);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+
+        <input id="auth-name" type="text" placeholder="Full name" autocomplete="name" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;display:none;">
+        <input id="auth-email" type="email" placeholder="Email" autocomplete="email" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;">
+        <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:8px;font-family:inherit;">
+
+        <div id="auth-forgot-row" style="text-align:right;margin-bottom:16px;">
+          <a href="#" onclick="handleForgotPassword();return false;" style="font-size:12px;color:var(--brown-light);text-decoration:none;">Forgot password?</a>
+        </div>
+
+        <button class="nav-btn" id="auth-submit-btn" style="width:100%;background:var(--accent);color:white;border:none;margin-bottom:12px;" onclick="handleEmailAuthSubmit()">Sign in</button>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--brown-light);font-size:12px;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          or
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+
+        <button class="nav-btn" style="width:100%;" onclick="handleGoogleSignIn()">Continue with Google</button>
       </div>
 
-      <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
-      <div id="auth-info" style="display:none;background:var(--green-light);color:var(--green);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
-
-      <input id="auth-email" type="email" placeholder="Email" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;">
-      <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:16px;font-family:inherit;">
-
-      <button class="nav-btn" id="auth-submit-btn" style="width:100%;background:var(--accent);color:white;border:none;margin-bottom:12px;" onclick="handleEmailAuthSubmit()">Sign in</button>
-
-      <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--brown-light);font-size:12px;">
-        <div style="flex:1;height:1px;background:var(--border);"></div>
-        or
-        <div style="flex:1;height:1px;background:var(--border);"></div>
+      <div id="auth-reset-fields" style="display:none;">
+        <h3 style="font-size:18px;margin-bottom:6px;">Set a new password</h3>
+        <p style="font-size:13px;color:var(--brown);margin-bottom:16px;">You followed a reset link — choose a new password below.</p>
+        <div id="auth-reset-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+        <input id="auth-new-password" type="password" placeholder="New password" autocomplete="new-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:16px;font-family:inherit;">
+        <button class="nav-btn" style="width:100%;background:var(--accent);color:white;border:none;" onclick="handleSetNewPassword()">Update password</button>
       </div>
 
-      <button class="nav-btn" style="width:100%;" onclick="handleGoogleSignIn()">Continue with Google</button>
     </div>
   </div>
 </div>
@@ -1007,6 +1004,8 @@ function switchAuthTab(mode) {
   document.getElementById('auth-tab-signin').style.background = mode === 'signin' ? 'var(--white)' : 'none';
   document.getElementById('auth-tab-signup').style.background = mode === 'signup' ? 'var(--white)' : 'none';
   document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+  document.getElementById('auth-name').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-forgot-row').style.display = mode === 'signup' ? 'none' : 'block';
   hideAuthMessages();
 }
 
@@ -1031,6 +1030,7 @@ function showAuthInfo(msg) {
 
 async function handleEmailAuthSubmit() {
   hideAuthMessages();
+  const name = document.getElementById('auth-name').value.trim();
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
 
@@ -1038,9 +1038,15 @@ async function handleEmailAuthSubmit() {
     showAuthError('Enter both an email and a password.');
     return;
   }
-  if (authMode === 'signup' && password.length < 6) {
-    showAuthError('Password needs to be at least 6 characters.');
-    return;
+  if (authMode === 'signup') {
+    if (!name) {
+      showAuthError('Enter your name.');
+      return;
+    }
+    if (password.length < 6) {
+      showAuthError('Password needs to be at least 6 characters.');
+      return;
+    }
   }
 
   if (authMode === 'signin') {
@@ -1048,7 +1054,11 @@ async function handleEmailAuthSubmit() {
     if (error) showAuthError(error.message);
     // success is handled by onAuthStateChange below
   } else {
-    const { data, error } = await sb.auth.signUp({ email, password });
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } }
+    });
     if (error) {
       showAuthError(error.message);
     } else if (!data.session) {
@@ -1056,6 +1066,50 @@ async function handleEmailAuthSubmit() {
       showAuthInfo('Check your email to confirm your account, then sign in.');
     }
   }
+}
+
+async function handleForgotPassword() {
+  hideAuthMessages();
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email) {
+    showAuthError('Enter your email above first, then click "Forgot password?".');
+    return;
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+  if (error) {
+    showAuthError(error.message);
+  } else {
+    showAuthInfo('Check your email for a password reset link.');
+  }
+}
+
+function showPasswordResetForm() {
+  goToScreen('auth');
+  document.getElementById('auth-form-fields').style.display = 'none';
+  document.getElementById('auth-reset-fields').style.display = 'block';
+}
+
+async function handleSetNewPassword() {
+  const errEl = document.getElementById('auth-reset-error');
+  errEl.style.display = 'none';
+  const newPassword = document.getElementById('auth-new-password').value;
+  if (!newPassword || newPassword.length < 6) {
+    errEl.textContent = 'Password needs to be at least 6 characters.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const { error } = await sb.auth.updateUser({ password: newPassword });
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    return;
+  }
+  document.getElementById('auth-form-fields').style.display = 'block';
+  document.getElementById('auth-reset-fields').style.display = 'none';
+  showToast('Password updated ✓');
+  goToScreen('profile');
 }
 
 async function handleGoogleSignIn() {
@@ -1073,14 +1127,10 @@ async function handleSignOut() {
 function updateAuthUI(session) {
   const btn = document.getElementById('nav-auth-btn');
   if (session) {
-    btn.textContent = session.user.email.split('@')[0];
-    document.getElementById('profile-email').textContent = session.user.email;
-    const avatarUrl = session.user.user_metadata?.avatar_url;
-    if (avatarUrl) {
-      const img = document.getElementById('profile-avatar');
-      img.src = avatarUrl;
-      img.style.display = 'block';
-    }
+    const name = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+    btn.textContent = name;
+    document.getElementById('profile-username').textContent = name;
+    document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
     if (currentSession === null || currentSession?.user?.id !== session.user.id) {
       goToScreen('profile');
     }
@@ -1122,6 +1172,10 @@ function broadcastSessionToExtension(session) {
 }
 
 sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    showPasswordResetForm();
+    return;
+  }
   updateAuthUI(session);
   currentSession = session;
   broadcastSessionToExtension(session);

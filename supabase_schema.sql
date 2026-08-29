@@ -1,8 +1,10 @@
 -- Run this once in Supabase Dashboard → SQL Editor → New Query → Run
+-- This is the full, current schema — creates everything from scratch, includes full_name.
 
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
   email text,
+  full_name text,
   total_saved numeric default 0 not null,
   created_at timestamptz default now() not null
 );
@@ -33,12 +35,12 @@ create policy "read own savings events" on public.savings_events
 create policy "insert own savings events" on public.savings_events
   for insert with check (auth.uid() = user_id);
 
--- Auto-create a profile row the moment someone signs up
+-- Auto-create a profile row the moment someone signs up, capturing the name from sign-up
 create function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email);
+  insert into public.profiles (id, email, full_name)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name');
   return new;
 end;
 $$ language plpgsql security definer;
