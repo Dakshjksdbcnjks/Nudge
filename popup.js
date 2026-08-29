@@ -39,3 +39,27 @@ async function renderAuthSection() {
 
 renderAuthSection();
 
+async function renderWageSection() {
+  const { nudge_hourly_wage, nudge_onboarding_pending } = await chrome.storage.local.get([
+    'nudge_hourly_wage', 'nudge_onboarding_pending'
+  ]);
+  const section = document.getElementById('wage-section');
+  const hasWage = Number(nudge_hourly_wage) > 0;
+  section.innerHTML = `
+    <div class="wage-box">
+      <label>${nudge_onboarding_pending || !hasWage ? 'Set your hourly wage for purchase reframes' : 'Hourly wage used by Nudge'}</label>
+      <div class="wage-row">
+        <input id="nudge-wage-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 18" value="${hasWage ? Number(nudge_hourly_wage) : ''}">
+        <button id="nudge-save-wage">Save</button>
+      </div>
+    </div>`;
+  document.getElementById('nudge-save-wage').addEventListener('click', async () => {
+    const wage = Number(document.getElementById('nudge-wage-input').value);
+    if (!Number.isFinite(wage) || wage <= 0) return;
+    await chrome.storage.local.set({ nudge_hourly_wage: wage, nudge_onboarding_pending: false });
+    renderWageSection();
+  });
+}
+
+renderWageSection();
+

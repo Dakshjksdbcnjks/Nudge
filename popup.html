@@ -34,6 +34,11 @@
     .saved-amount { font-size: 26px; font-weight: 700; color: #2D6A4F; }
     .signed-out-box { background: #FFF7EE; border: 1px solid #EDE6DC; border-radius: 10px; padding: 12px; text-align: center; font-size: 13px; color: #6B5C52; }
     .signed-out-box a { color: #D4663A; font-weight: 600; text-decoration: none; }
+    .wage-box { background: #FFF7EE; border: 1px solid #EDE6DC; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+    .wage-box label { display:block; color:#6B5C52; font-size:12px; font-weight:600; margin-bottom:8px; }
+    .wage-row { display:flex; gap:8px; }
+    .wage-row input { min-width:0; flex:1; border:1px solid #D4C8BC; border-radius:8px; padding:8px; font:inherit; }
+    .wage-row button { border:0; border-radius:8px; padding:8px 11px; background:#1C1410; color:white; font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -43,6 +48,7 @@
   </div>
   <div class="popup-body">
     <div id="auth-section" style="margin-bottom:16px;"></div>
+    <div id="wage-section"></div>
     <p class="popup-desc">
       See the <strong>real cost</strong> of any purchase — after interest, in hours worked, and future wealth lost.
     </p>

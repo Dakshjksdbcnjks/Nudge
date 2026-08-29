@@ -1,6 +1,15 @@
 const SUPABASE_URL = 'https://mujiunuyzjthcsfghyqm.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Nm61hwh-rh0ohm46oFEPvQ_OZiXKUzx';
 
+// The first popup opened after installation asks for this once. It stays local
+// to the extension and powers the work-time reframe on every supported site.
+chrome.runtime.onInstalled.addListener(async () => {
+  const { nudge_hourly_wage } = await chrome.storage.local.get('nudge_hourly_wage');
+  if (nudge_hourly_wage === undefined) {
+    await chrome.storage.local.set({ nudge_onboarding_pending: true });
+  }
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'NUDGE_SET_SESSION') {
     handleSetSession(msg.session);

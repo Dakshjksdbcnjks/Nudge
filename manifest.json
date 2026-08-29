@@ -23,22 +23,7 @@
       "run_at": "document_idle"
     },
     {
-      "matches": [
-        "*://*.amazon.com/*",
-        "*://*.checkout.stripe.com/*",
-        "*://*.paypal.com/checkoutnow*",
-        "*://*.afterpay.com/checkout*",
-        "*://*.klarna.com/checkout*",
-        "*://*.affirm.com/checkout*",
-        "*://*.shop.app/checkouts/*",
-        "*://checkout.shopify.com/*",
-        "*://*.myshopify.com/*/checkout*",
-        "*://*.etsy.com/*/checkout*",
-        "*://*.bestbuy.com/checkout/*",
-        "*://*.target.com/co-checkout/*",
-        "*://*.walmart.com/checkout/*",
-        "*://*.apple.com/shop/checkout*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"

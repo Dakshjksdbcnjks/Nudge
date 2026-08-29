@@ -1,178 +1,109 @@
-const NUDGE_APP_URL = 'https://nudge-53km.vercel.app/';
+// Nudge catches purchase intent before merchant click/submit handlers run.
+const BUY_INTENT = /\b(buy now|place order|complete purchase|pay now|checkout|submit order|order now|confirm (?:and )?pay|purchase now|continue to payment)\b/i;
+const ESCALATION_SECONDS = [12, 30, 60];
+const SUPABASE_URL = 'https://mujiunuyzjthcsfghyqm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Nm61hwh-rh0ohm46oFEPvQ_OZiXKUzx';
+let overlayOpen = false;
+let bypassElement = null;
+let allowNextSubmit = false;
+let lastInterceptAt = 0;
 
-const CHECKOUT_URL_SIGNALS = [
-  '/gp/buy', '/gp/cart', '/checkout', '/cart',
-  'checkoutnow', 'order-confirm', 'place-order',
-  '/buy/', 'payment', 'spc', 'address/select'
-];
-
-const CHECKOUT_TITLE_SIGNALS = [
-  'checkout', 'cart', 'payment', 'purchase',
-  'order', 'buy now', 'place order'
-];
-
-function isCheckoutPage() {
-  const url = window.location.href.toLowerCase();
-  const title = document.title.toLowerCase();
-  return CHECKOUT_URL_SIGNALS.some(s => url.includes(s)) ||
-         CHECKOUT_TITLE_SIGNALS.some(s => title.includes(s));
+function actionableElement(target) {
+  return target instanceof Element ? target.closest('button, a, input[type="submit"], input[type="button"], [role="button"], [onclick]') : null;
 }
-
-// ── PRICE DETECTION ──────────────────────────────────────────
+function intentText(element) {
+  if (!element) return '';
+  return [element.innerText, element.textContent, element.value, element.getAttribute('aria-label'), element.getAttribute('title'), element.getAttribute('data-testid'), element.getAttribute('name')].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+function formHasCardNumber(element) {
+  return Boolean(element?.closest?.('form')?.querySelector('[autocomplete="cc-number"]'));
+}
+function isPurchaseAction(element) {
+  return Boolean(element) && (BUY_INTENT.test(intentText(element)) || (formHasCardNumber(element) && /submit|pay|order|continue|review/i.test(intentText(element))));
+}
+function priceFromText(text) {
+  const match = text?.match(/(?:US\$|\$)\s*([\d,]+(?:\.\d{1,2})?)/);
+  return match ? Number(match[1].replace(/,/g, '')) : null;
+}
 function detectPrice() {
-  const selectors = [
-    '#subtotals-marketplace-table',   // Amazon order summary
-    '#spc-orders',
-    '.grand-total-price',
-    '[data-testid="grand-total"]',
-    '[class*="order-total"]',
-    '[class*="grand-total"]',
-    '[class*="cart-total"]',
-    '[id*="order-total"]',
-    '[id*="grand-total"]',
-    '.order-summary__total-recap',    // Shopify
-    '.checkout-total',
-    '[data-automation="Checkout-page-order-total"]'
-  ];
-
-  for (const sel of selectors) {
-    const el = document.querySelector(sel);
-    if (el) {
-      const match = el.textContent.match(/\$\s*([\d,]+\.?\d{0,2})/);
-      if (match) return parseFloat(match[1].replace(',', ''));
-    }
+  const selectors = ['[data-testid*="total" i]', '[data-test*="total" i]', '[class*="grand-total" i]', '[class*="order-total" i]', '[class*="cart-total" i]', '[id*="grand-total" i]', '[id*="order-total" i]', '.order-summary__total-recap', '#subtotals-marketplace-table'];
+  for (const selector of selectors) {
+    const value = priceFromText(document.querySelector(selector)?.textContent);
+    if (value && value > 0) return value;
   }
-
-  // Fallback: scan page text near the word "total"
-  const bodyText = document.body.innerText;
-  const m = bodyText.match(/(?:order total|grand total|total)[^\n$]{0,30}\$([\d,]+\.?\d{0,2})/i);
-  if (m) return parseFloat(m[1].replace(',', ''));
-
-  return null;
+  const bodyMatch = document.body?.innerText?.match(/(?:order total|grand total|total due|total)[^\n$]{0,40}\$\s*([\d,]+(?:\.\d{1,2})?)/i);
+  return bodyMatch ? Number(bodyMatch[1].replace(/,/g, '')) : null;
 }
-
-// ── ITEM NAME DETECTION ───────────────────────────────────────
-function detectItemName() {
-  // Amazon product page title
-  const amazonTitle = document.getElementById('productTitle');
-  if (amazonTitle) return amazonTitle.textContent.trim().split('\n')[0].substring(0, 60);
-
-  // Amazon cart — first item name
-  const amazonCartItem = document.querySelector('.sc-product-title, [class*="item-title"]');
-  if (amazonCartItem) return amazonCartItem.textContent.trim().substring(0, 60);
-
-  // Amazon checkout page heading (SPC)
-  const spcTitle = document.querySelector('#checkout-page-container h1, #spc-product-list .a-truncate-full');
-  if (spcTitle) return spcTitle.textContent.trim().substring(0, 60);
-
-  // Shopify — product title
-  const shopifyTitle = document.querySelector('.product__title, .cart-item__name, [class*="product-title"]');
-  if (shopifyTitle) return shopifyTitle.textContent.trim().substring(0, 60);
-
-  // Generic: og:title or first h1
-  const ogTitle = document.querySelector('meta[property="og:title"]');
-  if (ogTitle) {
-    const t = ogTitle.getAttribute('content');
-    if (t && !t.toLowerCase().includes('checkout')) return t.substring(0, 60);
-  }
-
-  return null;
+function readableSite() { return location.hostname.replace(/^www\./, ''); }
+function todayKey() { return new Date().toLocaleDateString('en-CA'); }
+async function nextDelay() {
+  const key = `nudge_intercepts:${readableSite()}:${todayKey()}`;
+  const stored = await chrome.storage.local.get(key);
+  const count = (Number(stored[key]) || 0) + 1;
+  await chrome.storage.local.set({ [key]: count });
+  return { count, seconds: ESCALATION_SECONDS[Math.min(count - 1, ESCALATION_SECONDS.length - 1)] };
 }
-
-// ── PAYMENT METHOD DETECTION ──────────────────────────────────
-function detectPaymentMethod() {
-  const text = document.body.innerText.toLowerCase();
-  if (text.includes('afterpay') || text.includes('klarna') ||
-      text.includes('affirm') || text.includes('buy now, pay later') ||
-      text.includes('pay in 4') || text.includes('pay later')) {
-    return 'bnpl';
-  }
-  if (text.includes('credit card') || text.includes('visa') ||
-      text.includes('mastercard') || text.includes('amex')) {
-    return 'credit';
-  }
-  return null;
+function formatMoney(value) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(value); }
+async function recordSavings(amount) {
+  if (!amount || amount <= 0) return;
+  const { nudge_session } = await chrome.storage.local.get('nudge_session');
+  if (!nudge_session?.access_token || !nudge_session?.user?.id) return;
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${nudge_session.access_token}`, 'Content-Type': 'application/json' };
+  try {
+    const event = await fetch(`${SUPABASE_URL}/rest/v1/savings_events`, { method: 'POST', headers, body: JSON.stringify({ user_id: nudge_session.user.id, amount, url: location.href }) });
+    if (!event.ok) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_total_saved`, { method: 'POST', headers, body: JSON.stringify({ uid: nudge_session.user.id, amt: amount }) });
+    const current = await chrome.storage.local.get('nudge_total_saved');
+    await chrome.storage.local.set({ nudge_total_saved: Number(current.nudge_total_saved || 0) + amount });
+  } catch (_) { /* A network error must never break the decision flow. */ }
 }
-
-// ── BANNER ────────────────────────────────────────────────────
-function dismissBanner() {
-  const banner = document.getElementById('nudge-banner');
-  if (!banner) return;
-  banner.style.transform = 'translateY(-100%)';
-  setTimeout(() => banner.remove(), 400);
-}
-
-function injectBanner() {
-  if (document.getElementById('nudge-banner')) return;
-
-  const price  = detectPrice();
-  const name   = detectItemName();
-  const method = detectPaymentMethod();
-
-  // Build display text for banner
-  let tagline = 'Know the real cost before you pay';
-  if (price && name) {
-    tagline = `${name.substring(0, 35)}${name.length > 35 ? '...' : ''} — $${price.toFixed(2)} detected`;
-  } else if (price) {
-    tagline = `$${price.toFixed(2)} detected — see what this really costs`;
-  } else if (name) {
-    tagline = `${name.substring(0, 45)} — check the real cost`;
-  }
-
-  const banner = document.createElement('div');
-  banner.id = 'nudge-banner';
-  banner.innerHTML = `
-    <div id="nudge-banner-inner">
-      <div id="nudge-banner-left">
-        <span id="nudge-logo">nudge<span style="color:#D4663A">.</span></span>
-        <span id="nudge-tagline">${tagline}</span>
-      </div>
-      <div id="nudge-banner-right">
-        <button id="nudge-open-btn">${price ? 'Autofill & check →' : 'Check real cost →'}</button>
-        <button id="nudge-dismiss-btn" title="Dismiss">✕</button>
-      </div>
-    </div>
-  `;
-
-  document.body.prepend(banner);
-
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    banner.style.transform = 'translateY(0)';
-  }));
-
-  document.getElementById('nudge-open-btn').addEventListener('click', () => {
-    // Build query params with everything we found
-    const params = new URLSearchParams();
-    if (price)  params.set('price',  price.toString());
-    if (name)   params.set('name',   name);
-    if (method) params.set('method', method);
-
-    const url = NUDGE_APP_URL + (params.toString() ? '?' + params.toString() : '');
-    window.open(url, '_blank', 'width=820,height=700,scrollbars=yes');
-    dismissBanner();
+function removeOverlay() { document.getElementById('nudge-circuit-breaker')?.remove(); overlayOpen = false; }
+async function showOverlay(element) {
+  overlayOpen = true;
+  const price = detectPrice();
+  const { nudge_hourly_wage } = await chrome.storage.local.get('nudge_hourly_wage');
+  const wage = Number(nudge_hourly_wage);
+  const { count, seconds } = await nextDelay();
+  const hours = price && wage > 0 ? price / wage : null;
+  const reframe = hours ? `${formatMoney(price)} is ${hours.toFixed(hours < 10 ? 1 : 0)} hours of your work at ${formatMoney(wage)}/hour.` : price ? `${formatMoney(price)} is leaving your account today.` : 'Pause for a moment before committing.';
+  const overlay = document.createElement('section');
+  overlay.id = 'nudge-circuit-breaker';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.innerHTML = `<div class="nudge-card"><div class="nudge-mark">nudge<span>.</span></div><p class="nudge-kicker">PURCHASE PAUSE ${count > 1 ? `· ATTEMPT ${count}` : ''}</p><h2>Give this purchase one conscious moment.</h2><p class="nudge-reframe">${reframe}</p><div class="nudge-countdown"><strong id="nudge-seconds">${seconds}</strong><span>seconds to reflect</span></div><p class="nudge-instruction" id="nudge-instruction">When the timer ends, choose deliberately.</p><div class="nudge-actions"><button type="button" class="nudge-skip" id="nudge-skip">Not worth it</button><button type="button" class="nudge-continue" id="nudge-continue" disabled aria-disabled="true">Continue anyway</button></div>${!wage ? '<p class="nudge-wage-note">Set your hourly wage in the Nudge extension to see work-time cost.</p>' : ''}</div>`;
+  document.documentElement.appendChild(overlay);
+  const continueButton = overlay.querySelector('#nudge-continue');
+  const secondsLabel = overlay.querySelector('#nudge-seconds');
+  const instruction = overlay.querySelector('#nudge-instruction');
+  let remaining = seconds;
+  const timer = setInterval(() => {
+    remaining -= 1; secondsLabel.textContent = Math.max(remaining, 0);
+    if (remaining > 0) return;
+    clearInterval(timer); instruction.textContent = 'One last step: tap “Continue anyway” to confirm your choice.';
+    continueButton.disabled = false; continueButton.setAttribute('aria-disabled', 'false');
+  }, 1000);
+  overlay.querySelector('#nudge-skip').addEventListener('click', async () => { clearInterval(timer); await recordSavings(price); removeOverlay(); });
+  continueButton.addEventListener('click', () => {
+    if (continueButton.disabled) return;
+    clearInterval(timer); bypassElement = element; removeOverlay();
+    setTimeout(() => {
+      if (element instanceof HTMLFormElement) {
+        allowNextSubmit = true;
+        element.requestSubmit();
+        allowNextSubmit = false;
+      } else {
+        element?.click();
+      }
+      bypassElement = null;
+    }, 0);
   });
-
-  document.getElementById('nudge-dismiss-btn').addEventListener('click', dismissBanner);
-
-  setTimeout(dismissBanner, 15000);
 }
-
-// ── INIT ──────────────────────────────────────────────────────
-function tryInject() {
-  if (isCheckoutPage()) setTimeout(injectBanner, 1000);
+function intercept(event, element) {
+  if (allowNextSubmit || !element || element === bypassElement || overlayOpen || Date.now() - lastInterceptAt < 500) return;
+  lastInterceptAt = Date.now(); event.preventDefault(); event.stopImmediatePropagation(); showOverlay(element);
 }
-
-// Watch for Amazon SPA navigation (no full page reload on checkout)
-let lastUrl = window.location.href;
-new MutationObserver(() => {
-  if (window.location.href !== lastUrl) {
-    lastUrl = window.location.href;
-    if (isCheckoutPage()) setTimeout(injectBanner, 1200);
-  }
-}).observe(document.body, { childList: true, subtree: true });
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', tryInject);
-} else {
-  tryInject();
-}
+// Capture phase runs before site React, checkout, and 1-click handlers.
+document.addEventListener('click', event => { const element = actionableElement(event.target); if (isPurchaseAction(element)) intercept(event, element); }, true);
+document.addEventListener('pointerdown', event => { const element = actionableElement(event.target); if (isPurchaseAction(element)) intercept(event, element); }, true);
+document.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { const element = actionableElement(event.target); if (isPurchaseAction(element)) intercept(event, element); } }, true);
+document.addEventListener('submit', event => { const form = event.target; if (!(form instanceof HTMLFormElement)) return; const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]'); if (formHasCardNumber(submitter || form) || isPurchaseAction(submitter)) intercept(event, submitter || form); }, true);
