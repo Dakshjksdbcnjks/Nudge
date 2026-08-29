@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -607,6 +608,7 @@
   <div class="nav-links">
     <button class="nav-btn" onclick="goToScreen('calculator')">Check a purchase</button>
     <button class="nav-btn" onclick="goToScreen('quiz')">Debt coach</button>
+    <button class="nav-btn" id="nav-auth-btn" onclick="handleAuthNavClick()">Sign in</button>
   </div>
 </nav>
 
@@ -661,6 +663,76 @@
           <div class="stat-label">avg Gen Z debt load</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== AUTH ======================== -->
+<div id="screen-auth" class="screen">
+  <div class="page" style="max-width:400px;">
+    <h1 class="display" style="font-size:32px;margin-bottom:8px;" id="auth-title">Sign in</h1>
+    <p style="color:var(--brown);font-size:14px;margin-bottom:24px;" id="auth-subtitle">Welcome back.</p>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-md);">
+      <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+      <label style="font-size:13px;font-weight:600;color:var(--brown);display:block;margin-bottom:6px;">Username</label>
+      <input id="auth-username" type="text" autocomplete="username" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:14px;font-family:inherit;">
+      <label style="font-size:13px;font-weight:600;color:var(--brown);display:block;margin-bottom:6px;">Password</label>
+      <input id="auth-password" type="password" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:20px;font-family:inherit;">
+      <button class="nav-btn" style="width:100%;background:var(--accent);color:white;border:none;" id="auth-submit-btn" onclick="handleAuthSubmit()">Sign in</button>
+      <p style="text-align:center;font-size:13px;color:var(--brown-light);margin-top:16px;">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <a href="#" onclick="toggleAuthMode();return false;" style="color:var(--accent);font-weight:600;text-decoration:none;" id="auth-toggle-link">Sign up</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== AUTH ======================== -->
+<div id="screen-auth" class="screen">
+  <div class="page" style="max-width:420px;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;box-shadow:var(--shadow-md);">
+      <div style="display:flex;gap:4px;background:var(--cream-2);border-radius:100px;padding:4px;margin-bottom:24px;">
+        <button id="auth-tab-signin" class="nav-btn" style="flex:1;border:none;" onclick="switchAuthTab('signin')">Sign in</button>
+        <button id="auth-tab-signup" class="nav-btn" style="flex:1;border:none;background:none;" onclick="switchAuthTab('signup')">Sign up</button>
+      </div>
+
+      <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+      <div id="auth-info" style="display:none;background:var(--green-light);color:var(--green);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+
+      <input id="auth-email" type="email" placeholder="Email" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;">
+      <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:16px;font-family:inherit;">
+
+      <button class="nav-btn" id="auth-submit-btn" style="width:100%;background:var(--accent);color:white;border:none;margin-bottom:12px;" onclick="handleEmailAuthSubmit()">Sign in</button>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--brown-light);font-size:12px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        or
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <button class="nav-btn" style="width:100%;" onclick="handleGoogleSignIn()">Continue with Google</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== PROFILE ======================== -->
+<div id="screen-profile" class="screen">
+  <div class="page" style="max-width:520px;">
+    <h1 class="display" style="font-size:32px;margin-bottom:24px;">Your profile</h1>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;box-shadow:var(--shadow-md);">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+        <div id="profile-avatar" style="width:48px;height:48px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;font-family:'Fraunces',serif;"></div>
+        <div>
+          <div id="profile-username" style="font-weight:600;font-size:16px;"></div>
+          <div style="font-size:13px;color:var(--brown-light);">Nudge member</div>
+        </div>
+      </div>
+      <div style="background:var(--green-light);border-radius:var(--radius-md);padding:24px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:6px;">TOTAL SAVED</div>
+        <div id="profile-total-saved" style="font-family:'Fraunces',serif;font-size:40px;font-weight:700;color:var(--green);">$0</div>
+      </div>
+      <p id="profile-motivation" style="font-size:13px;color:var(--brown);text-align:center;margin-bottom:20px;line-height:1.5;"></p>
+      <button class="nav-btn" style="width:100%;" onclick="handleSignOut()">Sign out</button>
     </div>
   </div>
 </div>
@@ -911,6 +983,158 @@ const state = {
   debtResults: null,
   debtEntryCount: 0
 };
+
+// ============================================================
+// AUTH (Supabase)
+// ============================================================
+const SUPABASE_URL = 'https://mujiunuyzjthcsfghyqm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Nm61hwh-rh0ohm46oFEPvQ_OZiXKUzx';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentSession = null;
+let authMode = 'signin'; // 'signin' | 'signup'
+
+function handleAuthNavClick() {
+  if (currentSession) {
+    goToScreen('profile');
+  } else {
+    goToScreen('auth');
+  }
+}
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('auth-tab-signin').style.background = mode === 'signin' ? 'var(--white)' : 'none';
+  document.getElementById('auth-tab-signup').style.background = mode === 'signup' ? 'var(--white)' : 'none';
+  document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+  hideAuthMessages();
+}
+
+function hideAuthMessages() {
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-info').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('auth-info').style.display = 'none';
+}
+
+function showAuthInfo(msg) {
+  const el = document.getElementById('auth-info');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function handleEmailAuthSubmit() {
+  hideAuthMessages();
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+
+  if (!email || !password) {
+    showAuthError('Enter both an email and a password.');
+    return;
+  }
+  if (authMode === 'signup' && password.length < 6) {
+    showAuthError('Password needs to be at least 6 characters.');
+    return;
+  }
+
+  if (authMode === 'signin') {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) showAuthError(error.message);
+    // success is handled by onAuthStateChange below
+  } else {
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) {
+      showAuthError(error.message);
+    } else if (!data.session) {
+      // Email confirmation is required before a session is issued
+      showAuthInfo('Check your email to confirm your account, then sign in.');
+    }
+  }
+}
+
+async function handleGoogleSignIn() {
+  await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+}
+
+async function handleSignOut() {
+  await sb.auth.signOut();
+  goHome();
+}
+
+function updateAuthUI(session) {
+  const btn = document.getElementById('nav-auth-btn');
+  if (session) {
+    btn.textContent = session.user.email.split('@')[0];
+    document.getElementById('profile-email').textContent = session.user.email;
+    const avatarUrl = session.user.user_metadata?.avatar_url;
+    if (avatarUrl) {
+      const img = document.getElementById('profile-avatar');
+      img.src = avatarUrl;
+      img.style.display = 'block';
+    }
+    if (currentSession === null || currentSession?.user?.id !== session.user.id) {
+      goToScreen('profile');
+    }
+  } else {
+    btn.textContent = 'Sign in';
+  }
+}
+
+// Milestone copy shown on the profile page — meant to keep people opening the app.
+function motivationCopy(total) {
+  if (total <= 0) return "Every skipped impulse buy adds up here. Your first save is one click away.";
+  if (total < 50) return "Nice start — keep letting Nudge catch the next one.";
+  if (total < 200) return `$${Math.round(total)} saved. That's real money that almost slipped away.`;
+  if (total < 1000) return `$${Math.round(total)} and counting — this is what staying intentional looks like.`;
+  return `$${Math.round(total)} saved. That's not luck, that's a habit. Keep going.`;
+}
+
+async function fetchTotalSaved(userId) {
+  const { data, error } = await sb.from('profiles').select('total_saved').eq('id', userId).single();
+  if (!error && data) {
+    const total = Number(data.total_saved);
+    document.getElementById('profile-total-saved').textContent =
+      '$' + total.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    document.getElementById('profile-motivation').textContent = motivationCopy(total);
+  }
+}
+
+// Relay the session to the Nudge extension (picked up by its content script on this domain)
+function broadcastSessionToExtension(session) {
+  window.postMessage({
+    source: 'nudge-web',
+    type: 'NUDGE_AUTH_SESSION',
+    session: session ? {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      user: { id: session.user.id, email: session.user.email }
+    } : null
+  }, window.location.origin);
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  updateAuthUI(session);
+  currentSession = session;
+  broadcastSessionToExtension(session);
+  if (session) fetchTotalSaved(session.user.id);
+});
+
+sb.auth.getSession().then(({ data: { session } }) => {
+  currentSession = session;
+  updateAuthUI(session);
+  if (session) fetchTotalSaved(session.user.id);
+});
+
+switchAuthTab('signin');
 
 // ============================================================
 // QUIZ DATA

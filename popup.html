@@ -29,6 +29,11 @@
     .popup-btn-outline:hover { background: #FFF7EE; border-color: #D4663A; color: #D4663A; }
     .popup-footer { border-top: 1px solid #EDE6DC; padding: 10px 20px; font-size: 11px; color: #A39088; text-align: center; }
     .opened-msg { font-size: 12px; color: #2D6A4F; background: #EBF5F0; border-radius: 8px; padding: 8px 12px; margin-top: 8px; display: none; text-align: center; }
+    .saved-box { background: #EBF5F0; border-radius: 10px; padding: 14px; text-align: center; }
+    .saved-label { font-size: 11px; color: #2D6A4F; font-weight: 600; margin-bottom: 4px; }
+    .saved-amount { font-size: 26px; font-weight: 700; color: #2D6A4F; }
+    .signed-out-box { background: #FFF7EE; border: 1px solid #EDE6DC; border-radius: 10px; padding: 12px; text-align: center; font-size: 13px; color: #6B5C52; }
+    .signed-out-box a { color: #D4663A; font-weight: 600; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -37,6 +42,7 @@
     <div class="popup-tagline">Know before you buy</div>
   </div>
   <div class="popup-body">
+    <div id="auth-section" style="margin-bottom:16px;"></div>
     <p class="popup-desc">
       See the <strong>real cost</strong> of any purchase — after interest, in hours worked, and future wealth lost.
     </p>

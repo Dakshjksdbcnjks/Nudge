@@ -3,7 +3,7 @@
   "name": "Nudge — Know Before You Buy",
   "version": "1.0",
   "description": "Nudge appears on checkout pages to show you the real cost of what you're buying — in interest, hours worked, and future wealth.",
-  "permissions": ["activeTab", "tabs"],
+  "permissions": ["activeTab", "tabs", "storage"],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
@@ -13,7 +13,15 @@
     "default_popup": "popup.html",
     "default_title": "Open Nudge"
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
+    {
+      "matches": ["https://nudge-53km.vercel.app/*"],
+      "js": ["auth-bridge.js"],
+      "run_at": "document_idle"
+    },
     {
       "matches": [
         "*://*.amazon.com/*",
