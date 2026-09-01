@@ -680,10 +680,13 @@
 
         <div id="auth-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
         <div id="auth-info" style="display:none;background:var(--green-light);color:var(--green);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
+        <div id="auth-verification" style="display:none;background:var(--amber-light);color:var(--amber);font-size:13px;padding:12px;border-radius:8px;margin-bottom:16px;">Check your inbox and spam folder for the verification link. <button type="button" onclick="resendVerification()" style="border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;font-weight:600;padding:0;">Resend email</button></div>
 
         <input id="auth-name" type="text" placeholder="Full name" autocomplete="name" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;display:none;">
         <input id="auth-email" type="email" placeholder="Email" autocomplete="email" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;">
         <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:8px;font-family:inherit;">
+        <div id="auth-password-hint" style="display:none;font-size:11px;color:var(--brown-light);line-height:1.45;margin:-2px 0 10px;">Use 8+ characters with uppercase, lowercase, a number, and a special character.</div>
+        <input id="auth-password-confirm" type="password" placeholder="Confirm password" autocomplete="new-password" style="display:none;width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:10px;font-family:inherit;">
 
         <div id="auth-forgot-row" style="text-align:right;margin-bottom:16px;">
           <a href="#" onclick="handleForgotPassword();return false;" style="font-size:12px;color:var(--brown-light);text-decoration:none;">Forgot password?</a>
@@ -705,6 +708,8 @@
         <p style="font-size:13px;color:var(--brown);margin-bottom:16px;">You followed a reset link — choose a new password below.</p>
         <div id="auth-reset-error" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;"></div>
         <input id="auth-new-password" type="password" placeholder="New password" autocomplete="new-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:16px;font-family:inherit;">
+        <div style="font-size:11px;color:var(--brown-light);line-height:1.45;margin:-8px 0 10px;">Use 8+ characters with uppercase, lowercase, a number, and a special character.</div>
+        <input id="auth-new-password-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;margin-bottom:16px;font-family:inherit;">
         <button class="nav-btn" style="width:100%;background:var(--accent);color:white;border:none;" onclick="handleSetNewPassword()">Update password</button>
       </div>
 
@@ -990,6 +995,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentSession = null;
 let authMode = 'signin'; // 'signin' | 'signup'
+let verificationEmail = '';
+
+function validPassword(password) {
+  return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[^A-Za-z0-9]/.test(password);
+}
 
 function handleAuthNavClick() {
   if (currentSession) {
@@ -1005,13 +1015,17 @@ function switchAuthTab(mode) {
   document.getElementById('auth-tab-signup').style.background = mode === 'signup' ? 'var(--white)' : 'none';
   document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
   document.getElementById('auth-name').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-password-hint').style.display = mode === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-password-confirm').style.display = mode === 'signup' ? 'block' : 'none';
   document.getElementById('auth-forgot-row').style.display = mode === 'signup' ? 'none' : 'block';
+  document.getElementById('auth-verification').style.display = 'none';
   hideAuthMessages();
 }
 
 function hideAuthMessages() {
   document.getElementById('auth-error').style.display = 'none';
   document.getElementById('auth-info').style.display = 'none';
+  document.getElementById('auth-verification').style.display = 'none';
 }
 
 function showAuthError(msg) {
@@ -1036,6 +1050,7 @@ async function handleEmailAuthSubmit() {
   const name = document.getElementById('auth-name').value.trim();
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
+  const confirmation = document.getElementById('auth-password-confirm').value;
 
   if (!email || !password) {
     showAuthError('Enter both an email and a password.');
@@ -1050,8 +1065,14 @@ async function handleEmailAuthSubmit() {
       submitBtn.textContent = 'Create account';
       return;
     }
-    if (password.length < 6) {
-      showAuthError('Password needs to be at least 6 characters.');
+    if (!validPassword(password)) {
+      showAuthError('Password must be 8+ characters and include uppercase, lowercase, a number, and a special character.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+      return;
+    }
+    if (password !== confirmation) {
+      showAuthError('Passwords do not match.');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Create account';
       return;
@@ -1060,7 +1081,13 @@ async function handleEmailAuthSubmit() {
 
   if (authMode === 'signin') {
     const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) showAuthError(error.message);
+    if (error) {
+      if (error.code === 'email_not_confirmed') {
+        verificationEmail = email;
+        document.getElementById('auth-verification').style.display = 'block';
+        showAuthError('Verify your email before signing in.');
+      } else showAuthError(error.message);
+    }
     // success is handled by onAuthStateChange below
   } else {
     const { data, error } = await sb.auth.signUp({
@@ -1072,11 +1099,21 @@ async function handleEmailAuthSubmit() {
       showAuthError(error.message);
     } else if (!data.session) {
       // Email confirmation is required before a session is issued
-      showAuthInfo('Check your email to confirm your account, then sign in.');
+      verificationEmail = email;
+      document.getElementById('auth-verification').style.display = 'block';
+      showAuthInfo('Account created. Check your inbox and spam folder, then click the verification link before signing in.');
     }
   }
   submitBtn.disabled = false;
   submitBtn.textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
+}
+
+async function resendVerification() {
+  const email = verificationEmail || document.getElementById('auth-email').value.trim();
+  if (!email) { showAuthError('Enter your email first.'); return; }
+  const { error } = await sb.auth.resend({ type: 'signup', email });
+  if (error) showAuthError(error.message);
+  else showAuthInfo('Verification email resent. Check your inbox and spam folder.');
 }
 
 async function handleForgotPassword() {
@@ -1106,8 +1143,14 @@ async function handleSetNewPassword() {
   const errEl = document.getElementById('auth-reset-error');
   errEl.style.display = 'none';
   const newPassword = document.getElementById('auth-new-password').value;
-  if (!newPassword || newPassword.length < 6) {
-    errEl.textContent = 'Password needs to be at least 6 characters.';
+  const confirmation = document.getElementById('auth-new-password-confirm').value;
+  if (!validPassword(newPassword)) {
+    errEl.textContent = 'Password must be 8+ characters and include uppercase, lowercase, a number, and a special character.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPassword !== confirmation) {
+    errEl.textContent = 'Passwords do not match.';
     errEl.style.display = 'block';
     return;
   }
